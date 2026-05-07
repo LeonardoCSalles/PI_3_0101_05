@@ -1,86 +1,93 @@
 import 'package:flutter/material.dart';
-import 'game_screen_biblioteca.dart'; // próxima tela
-import 'package:misterio_no_campus/services/permission_service.dart';
+// import 'game_screen_cantina.dart'; // descomentar quando criar a próxima tela
 
-class GameScreen extends StatefulWidget {
+class GameScreenBiblioteca extends StatefulWidget {
   @override
-  _GameScreenState createState() => _GameScreenState();
+  _GameScreenBibliotecaState createState() => _GameScreenBibliotecaState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   String _narrative = '';
   List<Map<String, dynamic>> _options = [];
   bool _showOptions = true;
 
   @override
-void initState() {
-  super.initState();
-  _iniciarJogo(); // troca _loadPortaria() por _iniciarJogo()
-}
-
-void _iniciarJogo() async {
-  bool temPermissao = await PermissionService.requestLocationPermission();
-
-  if (temPermissao) {
-    _loadPortaria();
-  } else {
-    setState(() {
-      _narrative = 'Para jogar, você precisa permitir o acesso à localização nas configurações do celular.';
-      _showOptions = false;
-    });
+  void initState() {
+    super.initState();
+    _loadBiblioteca();
   }
-}
 
-  void _loadPortaria() {
+  void _loadBiblioteca() {
     setState(() {
       _narrative =
-          'Você chega à entrada do campus e percebe que o movimento está menor do que o normal.\n\n'
-          'O ambiente parece estranho, como se algo tivesse acontecido recentemente.\n\n'
-          'Você sente que algo não está certo.';
+          'O silêncio da biblioteca é quase absoluto.\n\n'
+          'Enquanto anda entre as estantes, algo chama sua atenção: '
+          'um caderno aberto em uma mesa.\n\n'
+          'Você se aproxima e percebe que há um bilhete escrito às pressas.';
 
       _options = [
         {
-          'text': 'Observar melhor o ambiente',
+          'text': 'Ler o bilhete',
           'action': () => _showResponse(
-                'Você olha ao redor com mais atenção.\n'
-                'Algumas pessoas parecem evitar conversar sobre algo.\n'
-                'Isso só aumenta sua curiosidade.',
+                '"Se algo acontecer comigo, procure no laboratório."\n\n'
+                'A mensagem é direta e urgente.\n'
+                'Agora você tem um novo destino.',
+                avancar: true,
               ),
         },
         {
-          'text': 'Ignorar e seguir caminho',
+          'text': 'Ignorar o bilhete',
           'action': () => _showResponse(
-                'Você tenta ignorar a sensação estranha, mas algo insiste em chamar sua atenção.\n'
-                'Talvez seja melhor investigar antes de sair.',
+                'Você decide não mexer no caderno.\n\n'
+                'Mas a sensação de estar perdendo algo importante '
+                'não sai da sua cabeça.',
               ),
         },
         {
-          'text': 'Ir até a biblioteca',
-          'action': () => _goToBiblioteca(),
+          'text': 'Explorar mais a biblioteca',
+          'action': () => _showResponse(
+                'Você procura por mais pistas, mas não encontra '
+                'nada além do silêncio.',
+              ),
         },
       ];
     });
   }
 
-  void _showResponse(String text) {
+  void _showResponse(String text, {bool avancar = false}) {
     setState(() {
       _narrative = text;
       _showOptions = false;
     });
 
-    // Após 3 segundos, volta as opções da portaria
     Future.delayed(Duration(seconds: 3), () {
-      setState(() {
-        _showOptions = true;
-      });
+      if (avancar) {
+        _showBotaoAvancar();
+      } else {
+        setState(() {
+          _showOptions = true;
+        });
+      }
     });
   }
 
-  void _goToBiblioteca() {
-     Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => GameScreenBiblioteca()),
-    );
+  void _showBotaoAvancar() {
+    setState(() {
+      _showOptions = true;
+      _options = [
+        {
+          'text': 'Ir até o laboratório →',
+          'action': () => _goToLaboratorio(),
+        },
+      ];
+    });
+  }
+
+  void _goToLaboratorio() {
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => GameScreenLaboratorio()),
+    // );
   }
 
   @override
@@ -90,7 +97,7 @@ void _iniciarJogo() async {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          'Portaria',
+          'Biblioteca',
           style: TextStyle(
             fontFamily: 'RPG',
             color: Colors.white,
