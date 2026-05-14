@@ -2,7 +2,10 @@ import 'package:geolocator/geolocator.dart';
 import 'permission_service.dart';
 import '../models/location_model.dart';
 
+
 class LocationService {
+   // MUDA PARA false quando for testar no campus de verdade
+  static const bool modoDesenvolvedor = true;
   // Pega a posição atual do jogador uma vez
   static Future<Position?> getCurrentPosition() async {
     bool temPermissao = await PermissionService.requestLocationPermission();
@@ -51,20 +54,25 @@ class LocationService {
 
   // Verifica qual ambiente o jogador está agora
   static Future<GameLocation?> getAmbienteAtual() async {
-    Position? posicao = await getCurrentPosition();
-    if (posicao == null) return null;
-
-    for (GameLocation ambiente in gameLocations) {
-      if (ambiente.isUnlocked && estaNoAmbiente(
-        posicaoAtual: posicao,
-        ambiente: ambiente,
-      )) {
-        return ambiente;
-      }
-    }
-
-    return null; // não está em nenhum ambiente
+  // Se estiver em modo desenvolvedor, retorna a portaria direto
+  if (modoDesenvolvedor) {
+    return gameLocations.firstWhere((l) => l.id == 'portaria');
   }
+
+  Position? posicao = await getCurrentPosition();
+  if (posicao == null) return null;
+
+  for (GameLocation ambiente in gameLocations) {
+    if (ambiente.isUnlocked && estaNoAmbiente(
+      posicaoAtual: posicao,
+      ambiente: ambiente,
+    )) {
+      return ambiente;
+    }
+  }
+
+  return null;
+}
 
   // Qual o ambiente mais próximo agora (para dar dica ao jogador)
   static Future<Map<String, dynamic>?> getAmbienteMaisProximo() async {

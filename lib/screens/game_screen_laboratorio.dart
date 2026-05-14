@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'game_screen_cantina.dart'; // descomentar quando criar a próxima tela
+import 'game_screen_praca_central.dart';
 
-class GameScreenBiblioteca extends StatefulWidget {
+class GameScreenLaboratorio extends StatefulWidget {
   @override
-  _GameScreenBibliotecaState createState() => _GameScreenBibliotecaState();
+  _GameScreenLaboratorioState createState() => _GameScreenLaboratorioState();
 }
 
-class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
+class _GameScreenLaboratorioState extends State<GameScreenLaboratorio> {
   String _narrative = '';
   List<Map<String, dynamic>> _options = [];
   bool _showOptions = true;
@@ -14,40 +14,39 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   @override
   void initState() {
     super.initState();
-    _loadBiblioteca();
+    _loadLaboratorio();
   }
 
-  void _loadBiblioteca() {
+  void _loadLaboratorio() {
     setState(() {
       _narrative =
-          'O silêncio da biblioteca é quase absoluto.\n\n'
-          'Enquanto anda entre as estantes, algo chama sua atenção: '
-          'um caderno aberto em uma mesa.\n\n'
-          'Você se aproxima e percebe que há um bilhete escrito às pressas.';
+          'O laboratório está escuro, exceto por um monitor ligado no canto.\n\n'
+          'A tela exibe uma janela de terminal aberta com comandos digitados.\n\n'
+          'Alguém esteve aqui recentemente e saiu às pressas.';
 
       _options = [
         {
-          'text': 'Ler o bilhete',
+          'text': 'Examinar o monitor ligado',
           'action': () => _showResponse(
-                '"Se algo acontecer comigo, procure no laboratório."\n\n'
-                'A mensagem é direta e urgente.\n'
-                'Agora você tem um novo destino.',
+                'Na tela você vê um arquivo aberto.\n\n'
+                'São coordenadas e horários. Alguém estava mapeando '
+                'os movimentos de pessoas no campus.\n\n'
+                '"Encontro marcado. Praça Central. 18h."',
                 avancar: true,
               ),
         },
         {
-          'text': 'Ignorar o bilhete',
+          'text': 'Procurar pelos computadores',
           'action': () => _showResponse(
-                'Você decide não mexer no caderno.\n\n'
-                'Mas a sensação de estar perdendo algo importante '
-                'não sai da sua cabeça.',
+                'Os outros computadores estão desligados e trancados.\n\n'
+                'Só o do canto tem algo relevante.',
               ),
         },
         {
-          'text': 'Explorar mais a biblioteca',
+          'text': 'Verificar as câmeras do lab',
           'action': () => _showResponse(
-                'Você procura por mais pistas, mas não encontra '
-                'nada além do silêncio.',
+                'As câmeras estão cobertas com fita preta.\n\n'
+                'Quem esteve aqui sabia o que estava fazendo.',
               ),
         },
       ];
@@ -76,15 +75,15 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
       _showOptions = true;
       _options = [
         {
-          'text': 'Ir até o laboratório →',
-          'action': () => _goToLaboratorio(),
+          'text': 'Ir até a Praça Central →',
+          'action': () => _goToPracaCentral(),
         },
       ];
     });
   }
 
-  void _goToLaboratorio() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => GameScreenCantina()));
+  void _goToPracaCentral() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => GameScreenPracaCentral()));
   }
 
   @override
@@ -94,7 +93,7 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          'Biblioteca',
+          'Laboratório',
           style: TextStyle(
             fontFamily: 'RPG',
             color: Colors.white,
@@ -108,7 +107,6 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // CAIXA DE NARRATIVA
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(16),
@@ -127,10 +125,7 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
                 ),
               ),
             ),
-
             SizedBox(height: 32),
-
-            // OPÇÕES
             if (_showOptions)
               ...(_options.map(
                 (option) => Padding(

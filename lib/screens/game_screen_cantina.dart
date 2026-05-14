@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'game_screen_cantina.dart'; // descomentar quando criar a próxima tela
+import 'game_screen_laboratorio.dart';
 
-class GameScreenBiblioteca extends StatefulWidget {
+class GameScreenCantina extends StatefulWidget {
   @override
-  _GameScreenBibliotecaState createState() => _GameScreenBibliotecaState();
+  _GameScreenCantinaState createState() => _GameScreenCantinaState();
 }
 
-class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
+class _GameScreenCantinaState extends State<GameScreenCantina> {
   String _narrative = '';
   List<Map<String, dynamic>> _options = [];
   bool _showOptions = true;
@@ -14,40 +14,40 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   @override
   void initState() {
     super.initState();
-    _loadBiblioteca();
+    _loadCantina();
   }
 
-  void _loadBiblioteca() {
+  void _loadCantina() {
     setState(() {
       _narrative =
-          'O silêncio da biblioteca é quase absoluto.\n\n'
-          'Enquanto anda entre as estantes, algo chama sua atenção: '
-          'um caderno aberto em uma mesa.\n\n'
-          'Você se aproxima e percebe que há um bilhete escrito às pressas.';
+          'A cantina está quase vazia para essa hora do dia.\n\n'
+          'Algumas mesas com bandejas abandonadas. Um copo virado.\n\n'
+          'No canto, um funcionário limpa o balcão sem te olhar nos olhos.';
 
       _options = [
         {
-          'text': 'Ler o bilhete',
+          'text': 'Falar com o funcionário',
           'action': () => _showResponse(
-                '"Se algo acontecer comigo, procure no laboratório."\n\n'
-                'A mensagem é direta e urgente.\n'
-                'Agora você tem um novo destino.',
+                'Ele hesita antes de responder.\n\n'
+                '"Eu vi algo sim... mas prefiro não me meter."\n\n'
+                'Ele aponta discretamente para uma mochila esquecida embaixo de uma mesa.',
+                avancar: false,
+              ),
+        },
+        {
+          'text': 'Examinar a mochila esquecida',
+          'action': () => _showResponse(
+                'Dentro da mochila você encontra um crachá universitário.\n\n'
+                'O nome no crachá é o mesmo do bilhete que você encontrou na biblioteca.\n\n'
+                'A investigação está ficando mais séria.',
                 avancar: true,
               ),
         },
         {
-          'text': 'Ignorar o bilhete',
+          'text': 'Procurar mais pistas',
           'action': () => _showResponse(
-                'Você decide não mexer no caderno.\n\n'
-                'Mas a sensação de estar perdendo algo importante '
-                'não sai da sua cabeça.',
-              ),
-        },
-        {
-          'text': 'Explorar mais a biblioteca',
-          'action': () => _showResponse(
-                'Você procura por mais pistas, mas não encontra '
-                'nada além do silêncio.',
+                'Você vasculha as mesas próximas mas não encontra nada relevante.\n\n'
+                'Só bandejas e restos de comida.',
               ),
         },
       ];
@@ -84,7 +84,7 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   }
 
   void _goToLaboratorio() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => GameScreenCantina()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => GameScreenLaboratorio()));
   }
 
   @override
@@ -94,7 +94,7 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          'Biblioteca',
+          'Cantina',
           style: TextStyle(
             fontFamily: 'RPG',
             color: Colors.white,
@@ -108,7 +108,6 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // CAIXA DE NARRATIVA
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(16),
@@ -127,10 +126,7 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
                 ),
               ),
             ),
-
             SizedBox(height: 32),
-
-            // OPÇÕES
             if (_showOptions)
               ...(_options.map(
                 (option) => Padding(
