@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "24528255606",
+    "project_id": "misterio-no-campus-ebd33",
+    "storage_bucket": "misterio-no-campus-ebd33.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:24528255606:android:21497185abdc6395603d57",
+        "android_client_info": {
+          "package_name": "com.example.misterio_no_campus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJqDoBCPXfsizziGFoEjC6xUeP8n0XIJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import '../services/firebase_service.dart';
+import '../models/player_state.dart';
 import 'game_screen.dart';
+import 'cadastro_screen.dart';
+
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -48,13 +52,28 @@ class HomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GameScreen(),
-                      ),
-                    );
+                  onPressed: () async {
+                    if (PlayerState.temJogador) {
+                      // jogador já existe, carrega o progresso
+                      var progresso = await FirebaseService.carregarProgresso(
+                        PlayerState.jogadorId!,
+                      );
+                      if (progresso != null) {
+                        PlayerState.ambientesDesbloqueados =
+                            List<String>.from(progresso['ambientesDesbloqueados']);
+                        PlayerState.ambienteAtual = progresso['ambienteAtual'];
+                      }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => GameScreen()),
+                      );
+                    } else {
+                      // primeira vez, vai para o cadastro
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CadastroScreen()),
+                      );
+                    }
                   },
                   child: Text(
                     'INICIAR',
