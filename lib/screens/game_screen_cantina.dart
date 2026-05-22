@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'game_screen_laboratorio.dart';
 import '../services/firebase_service.dart';
 import '../models/player_state.dart';
+import '../services/location_service.dart';
+import '../models/location_model.dart';
 
 class GameScreenCantina extends StatefulWidget {
   @override
@@ -11,6 +13,7 @@ class GameScreenCantina extends StatefulWidget {
 
 class _GameScreenCantinaState extends State<GameScreenCantina> {
   int _dialogueIndex = 0;
+  bool _bloqueado = false;
   bool _showChoices = false;
   bool _typing = false;
   bool _showAvancar = false;
@@ -32,7 +35,23 @@ class _GameScreenCantinaState extends State<GameScreenCantina> {
   @override
   void initState() {
     super.initState();
-    _startDialogue(0);
+    _verificarLocalizacao();
+  }
+
+  void _verificarLocalizacao() async {
+    GameLocation? ambienteAtual = await LocationService.getAmbienteAtual();
+
+    if (ambienteAtual?.id != 'cantina') {
+      setState(() {
+        _bloqueado = true;
+        _speaker = 'NARRADOR';
+        _fullText = 'Você precisa estar na Cantina para continuar a investigação. Dirija-se até lá.';
+        _displayedText = _fullText;
+        _typing = false;
+      });
+    } else {
+      _startDialogue(0);
+    }
   }
 
   void _startDialogue(int index) {
@@ -126,6 +145,17 @@ class _GameScreenCantinaState extends State<GameScreenCantina> {
       body: SafeArea(
         child: Column(
           children: [
+            if (_bloqueado)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                color: const Color(0xFF1A0000),
+                child: Text(
+                  '📍 FORA DO RAIO — CANTINA',
+                  style: GoogleFonts.pressStart2p(fontSize: 8, color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             // BARRA
             Container(
               color: Colors.black,

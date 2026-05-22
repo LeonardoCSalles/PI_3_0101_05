@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/firebase_service.dart';
 import '../models/player_state.dart';
+import '../services/location_service.dart';
+import '../models/location_model.dart';
 
 class GameScreenPracaCentral extends StatefulWidget {
   @override
@@ -9,12 +12,14 @@ class GameScreenPracaCentral extends StatefulWidget {
 
 class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
   int _dialogueIndex = 0;
+  bool _bloqueado = false;
   bool _showChoices = false;
   bool _typing = false;
+  bool _showAvancar = false;
+  bool _fimDeJogo = false;
   String _displayedText = '';
   String _fullText = '';
   String _speaker = '';
-  bool _fimDeJogo = false;
 
   final List<Map<String, String>> _dialogues = [
     {'speaker': 'NARRADOR', 'text': 'A praça está quieta. O sol já está baixo entre as árvores.'},
@@ -23,10 +28,30 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
     {'speaker': 'MISTERIOSO', 'text': 'Tenho algo para te mostrar. Algo que vai mudar tudo o que você sabe sobre este campus.'},
   ];
 
+  TextStyle get _rpgStyle => GoogleFonts.pressStart2p(fontSize: 11, color: const Color(0xFFE0E0E0), height: 2.0);
+  TextStyle get _rpgStyleYellow => GoogleFonts.pressStart2p(fontSize: 9, color: const Color(0xFFF8F800), letterSpacing: 1);
+  TextStyle get _rpgStyleSmall => GoogleFonts.pressStart2p(fontSize: 8, color: const Color(0xFF505080), letterSpacing: 2);
+
   @override
   void initState() {
     super.initState();
-    _startDialogue(0);
+    _verificarLocalizacao();
+  }
+
+  void _verificarLocalizacao() async {
+    GameLocation? ambienteAtual = await LocationService.getAmbienteAtual();
+
+    if (ambienteAtual?.id != 'praca_central') {
+      setState(() {
+        _bloqueado = true;
+        _speaker = 'NARRADOR';
+        _fullText = 'Você precisa estar na Praça Central para o desfecho da investigação. Dirija-se até lá.';
+        _displayedText = _fullText;
+        _typing = false;
+      });
+    } else {
+      _startDialogue(0);
+    }
   }
 
   void _startDialogue(int index) {
@@ -37,13 +62,14 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
       _displayedText = '';
       _typing = true;
       _showChoices = false;
+      _showAvancar = false;
     });
     _typeText();
   }
 
   void _typeText() async {
     for (int i = 0; i < _fullText.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 40));
+      await Future.delayed(const Duration(milliseconds: 35));
       if (!mounted) return;
       setState(() => _displayedText = _fullText.substring(0, i + 1));
     }
@@ -68,8 +94,8 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
 
   void _escolher(int opcao) async {
     final respostas = [
-      {'speaker': 'NARRADOR', 'text': 'Você aceita o envelope. Dentro, documentos que revelam tudo. O mistério foi desvendado.'},
-      {'speaker': 'MISTERIOSO', 'text': 'Como quiser. Vou te contar tudo. Cada detalhe do que aconteceu aqui no campus.'},
+      {'speaker': 'NARRADOR', 'text': 'Você aceita o envelope com cuidado. Dentro, documentos com nomes, datas e provas do que aconteceu. O mistério do campus foi finalmente desvendado.'},
+      {'speaker': 'MISTERIOSO', 'text': 'Como quiser. Tudo começou há três meses, quando descobri que alguém estava usando os laboratórios para monitorar alunos e professores sem autorização. Eu precisava de ajuda para expor isso.'},
     ];
 
     setState(() {
@@ -78,9 +104,19 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
       _fullText = respostas[opcao]['text']!;
       _displayedText = '';
       _typing = true;
+      _fimDeJogo = false;
     });
-    _typeText();
 
+    // digita o texto letra por letra
+    for (int i = 0; i < _fullText.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 35));
+      if (!mounted) return;
+      setState(() => _displayedText = _fullText.substring(0, i + 1));
+    }
+    if (!mounted) return;
+    setState(() => _typing = false);
+
+    // salva no Firebase
     if (PlayerState.jogadorId != null) {
       await FirebaseService.registrarInteracao(
         jogadorId: PlayerState.jogadorId!,
@@ -94,109 +130,195 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
       );
     }
 
-    await Future.delayed(const Duration(seconds: 3));
+    // espera o jogador ler por 5 segundos antes de mostrar fim de jogo
+    await Future.delayed(const Duration(seconds: 5));
     if (!mounted) return;
+
     setState(() {
       _fimDeJogo = true;
-      _showChoices = false;
       _speaker = 'NARRADOR';
       _fullText = 'Parabéns! Você percorreu todo o campus e desvendou o Mistério no Campus!';
       _displayedText = _fullText;
-      _typing = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A1A),
       body: SafeArea(
         child: Column(
           children: [
-            _buildLocationBar(),
-            _buildScene(),
-            GestureDetector(onTap: _onTapDialogue, child: _buildDialogueBox()),
-            if (_showChoices) _buildChoices(),
-            if (_fimDeJogo) _buildBotaoFim(),
-          ],
-        ),
-      ),
-    );
-  }
+            if (_bloqueado)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                color: const Color(0xFF1A0000),
+                child: Text(
+                  '📍 FORA DO RAIO — PRAÇA CENTRAL',
+                  style: GoogleFonts.pressStart2p(fontSize: 8, color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            // BARRA
+            Container(
+              color: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('◆ PRAÇA CENTRAL ◆', style: _rpgStyleYellow),
+                  Text('▶ ENTARDECER',
+                      style: GoogleFonts.pressStart2p(fontSize: 9, color: const Color(0xFFFFAA00))),
+                ],
+              ),
+            ),
 
-  Widget _buildLocationBar() {
-    return Container(
-      color: Colors.black,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
-          Text('◆ PRAÇA CENTRAL ◆',
-              style: TextStyle(fontFamily: 'RPG', fontSize: 8, color: Color(0xFFF8F800))),
-          Text('▶ ENTARDECER',
-              style: TextStyle(fontFamily: 'RPG', fontSize: 7, color: Color(0xFFFFAA00))),
-        ],
-      ),
-    );
-  }
+            // CENA
+            Container(
+              height: screenHeight * 0.38,
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  // CÉU GRADIENTE
+                  Positioned.fill(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF1A0A2E), Color(0xFF2E1A0A), Color(0xFF0A1A0A)],
+                        ),
+                      ),
+                    ),
+                  ),
 
-  Widget _buildScene() {
-    return Container(
-      height: 220,
-      width: double.infinity,
-      color: const Color(0xFF0A1A0A),
-      child: Stack(
-        children: [
-          // CÉU
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF1A0A2E), Color(0xFF2E1A0A), Color(0xFF0A1A0A)],
+                  // ÁRVORES
+                  Positioned(bottom: 40, left: 8, child: _buildArvore(90)),
+                  Positioned(bottom: 40, left: 55, child: _buildArvore(65)),
+                  Positioned(bottom: 40, right: 8, child: _buildArvore(90)),
+                  Positioned(bottom: 40, right: 55, child: _buildArvore(65)),
+
+                  // BANCO
+                  Positioned(
+                    bottom: 50, left: 0, right: 0,
+                    child: Center(child: _buildBanco()),
+                  ),
+
+                  // PERSONAGEM
+                  Positioned(
+                    bottom: 50, left: 0, right: 0,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 40),
+                        child: _buildMisterioso(),
+                      ),
+                    ),
+                  ),
+
+                  // PISO
+                  Positioned(
+                    bottom: 0, left: 0, right: 0,
+                    child: Container(
+                      height: 40,
+                      color: const Color(0xFF0A1A0A),
+                      foregroundDecoration: const BoxDecoration(
+                        border: Border(top: BorderSide(color: Color(0xFF1A3A1A), width: 3)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // DIÁLOGO
+            Expanded(
+              child: GestureDetector(
+                onTap: _onTapDialogue,
+                child: Container(
+                  width: double.infinity,
+                  color: const Color(0xFF000010),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF000050),
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Text(_speaker, style: _rpgStyleYellow),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(_displayedText, style: _rpgStyle),
+                      if (!_typing && !_showChoices && !_fimDeJogo)
+                        const Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text('▼', style: TextStyle(color: Colors.white, fontSize: 14)),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // ÁRVORES
-          Positioned(bottom: 36, left: 10, child: _buildArvore(80)),
-          Positioned(bottom: 36, left: 60, child: _buildArvore(60)),
-          Positioned(bottom: 36, right: 10, child: _buildArvore(80)),
-          Positioned(bottom: 36, right: 60, child: _buildArvore(60)),
-
-          // BANCO CENTRAL
-          Positioned(
-            bottom: 46,
-            left: 0, right: 0,
-            child: Center(child: _buildBanco()),
-          ),
-
-          // PERSONAGEM MISTERIOSO
-          Positioned(
-            bottom: 46,
-            left: 0, right: 0,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 30),
-                child: _buildMisterioso(),
+            // ESCOLHAS
+            if (_showChoices)
+              Container(
+                color: const Color(0xFF000018),
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  children: [
+                    Text('— ESCOLHA —', style: _rpgStyleSmall),
+                    const SizedBox(height: 8),
+                    ...List.generate(2, (i) {
+                      final opcoes = ['ACEITAR O ENVELOPE', 'EXIGIR RESPOSTAS DIRETAMENTE'];
+                      return GestureDetector(
+                        onTap: () => _escolher(i),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF000018),
+                            border: Border.all(color: const Color(0xFF303060), width: 2),
+                          ),
+                          child: Row(
+                            children: [
+                              Text('► ', style: _rpgStyleYellow),
+                              Expanded(child: Text(opcoes[i],
+                                  style: GoogleFonts.pressStart2p(fontSize: 9, color: const Color(0xFFA0A0C0)))),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
               ),
-            ),
-          ),
 
-          // PISO
-          Positioned(
-            bottom: 0, left: 0, right: 0,
-            child: Container(
-              height: 36,
-              color: const Color(0xFF0A1A0A),
-              foregroundDecoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFF1A3A1A), width: 3)),
+            // FIM DE JOGO
+            if (_fimDeJogo)
+              GestureDetector(
+                onTap: () => Navigator.popUntil(context, (route) => route.isFirst),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  color: const Color(0xFF001400),
+                  child: Center(
+                    child: Text('★ VOLTAR AO INÍCIO ★',
+                        style: GoogleFonts.pressStart2p(
+                            fontSize: 11,
+                            color: const Color(0xFFF8F800),
+                            letterSpacing: 2)),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -206,21 +328,17 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 30,
+          width: 32,
           height: altura * 0.7,
-          decoration: const BoxDecoration(
-            color: Color(0xFF1A4A1A),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(15),
-              topRight: Radius.circular(15),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A4A1A),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
             ),
           ),
         ),
-        Container(
-          width: 8,
-          height: altura * 0.3,
-          color: const Color(0xFF5D3A1A),
-        ),
+        Container(width: 8, height: altura * 0.3, color: const Color(0xFF5D3A1A)),
       ],
     );
   }
@@ -228,13 +346,15 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
   Widget _buildBanco() {
     return Column(
       children: [
-        Container(width: 50, height: 6, color: const Color(0xFF8B6914)),
+        Container(width: 55, height: 7, color: const Color(0xFF8B6914),
+            foregroundDecoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFAA8930), width: 2)))),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 6, height: 14, color: const Color(0xFF6B4A10)),
-            const SizedBox(width: 30),
-            Container(width: 6, height: 14, color: const Color(0xFF6B4A10)),
+            Container(width: 6, height: 16, color: const Color(0xFF6B4A10)),
+            const SizedBox(width: 35),
+            Container(width: 6, height: 16, color: const Color(0xFF6B4A10)),
           ],
         ),
       ],
@@ -245,124 +365,21 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
     return Column(
       children: [
         Container(
-          width: 20,
-          height: 16,
+          width: 22, height: 18,
           decoration: BoxDecoration(
             color: const Color(0xFF8A7060),
             border: Border.all(color: const Color(0xFF6A5040), width: 2),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: 0, left: 0, right: 0,
-                child: Container(height: 5, color: const Color(0xFF2A2A2A)),
-              ),
-            ],
-          ),
+          child: Stack(children: [
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: Container(height: 5, color: const Color(0xFF2A2A2A)),
+            ),
+          ]),
         ),
-        Container(
-          width: 22,
-          height: 20,
-          color: const Color(0xFF2A2A2A),
-        ),
-        Container(
-          width: 22,
-          height: 12,
-          color: const Color(0xFF1A1A1A),
-        ),
+        Container(width: 24, height: 22, color: const Color(0xFF2A2A2A)),
+        Container(width: 24, height: 14, color: const Color(0xFF1A1A1A)),
       ],
-    );
-  }
-
-  Widget _buildDialogueBox() {
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFF000010),
-      padding: const EdgeInsets.all(12),
-      constraints: const BoxConstraints(minHeight: 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFF000050),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Text(_speaker,
-                style: const TextStyle(
-                    fontFamily: 'RPG', fontSize: 8, color: Color(0xFFF8F800))),
-          ),
-          const SizedBox(height: 8),
-          Text(_displayedText,
-              style: const TextStyle(
-                  fontFamily: 'RPG', fontSize: 8,
-                  color: Color(0xFFE0E0E0), height: 2.2)),
-          if (!_typing && !_showChoices && !_fimDeJogo)
-            const Align(
-              alignment: Alignment.bottomRight,
-              child: Text('▼', style: TextStyle(color: Colors.white, fontSize: 10)),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChoices() {
-    final opcoes = [
-      'ACEITAR O ENVELOPE',
-      'EXIGIR RESPOSTAS DIRETAMENTE',
-    ];
-    return Container(
-      color: const Color(0xFF000018),
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        children: [
-          const Text('— ESCOLHA —',
-              style: TextStyle(fontFamily: 'RPG', fontSize: 7, color: Color(0xFF505080))),
-          const SizedBox(height: 6),
-          ...List.generate(opcoes.length, (i) => GestureDetector(
-            onTap: () => _escolher(i),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-              margin: const EdgeInsets.only(bottom: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF000018),
-                border: Border.all(color: const Color(0xFF303060), width: 2),
-              ),
-              child: Row(
-                children: [
-                  const Text('► ',
-                      style: TextStyle(fontFamily: 'RPG', fontSize: 9, color: Color(0xFFF8F800))),
-                  Expanded(
-                    child: Text(opcoes[i],
-                        style: const TextStyle(
-                            fontFamily: 'RPG', fontSize: 7, color: Color(0xFFA0A0C0))),
-                  ),
-                ],
-              ),
-            ),
-          )),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBotaoFim() {
-    return GestureDetector(
-      onTap: () => Navigator.popUntil(context, (route) => route.isFirst),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        color: const Color(0xFF001400),
-        child: const Center(
-          child: Text('★ VOLTAR AO INÍCIO ★',
-              style: TextStyle(
-                  fontFamily: 'RPG', fontSize: 9,
-                  color: Color(0xFFF8F800), letterSpacing: 2)),
-        ),
-      ),
     );
   }
 }

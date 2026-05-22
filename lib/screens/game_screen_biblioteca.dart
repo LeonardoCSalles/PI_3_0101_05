@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'game_screen_cantina.dart';
 import '../services/firebase_service.dart';
 import '../models/player_state.dart';
+import '../services/location_service.dart';
+import '../models/location_model.dart';
 
 class GameScreenBiblioteca extends StatefulWidget {
   @override
@@ -11,6 +13,7 @@ class GameScreenBiblioteca extends StatefulWidget {
 
 class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   int _dialogueIndex = 0;
+  bool _bloqueado = false;
   bool _showChoices = false;
   bool _typing = false;
   bool _showAvancar = false;
@@ -46,7 +49,23 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   @override
   void initState() {
     super.initState();
-    _startDialogue(0);
+    _verificarLocalizacao();
+  }
+
+  void _verificarLocalizacao() async {
+    GameLocation? ambienteAtual = await LocationService.getAmbienteAtual();
+
+    if (ambienteAtual?.id != 'biblioteca') {
+      setState(() {
+        _bloqueado = true;
+        _speaker = 'NARRADOR';
+        _fullText = 'Você precisa estar na Biblioteca para continuar a investigação. Dirija-se até lá.';
+        _displayedText = _fullText;
+        _typing = false;
+      });
+    } else {
+      _startDialogue(0);
+    }
   }
 
   void _startDialogue(int index) {
@@ -132,6 +151,18 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
       body: SafeArea(
         child: Column(
           children: [
+            // coloca isso dentro do Column, antes da barra de localização
+            if (_bloqueado)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                color: const Color(0xFF1A0000),
+                child: Text(
+                  '📍 FORA DO RAIO — BIBLIOTECA',
+                  style: GoogleFonts.pressStart2p(fontSize: 8, color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             // BARRA DE LOCALIZAÇÃO
             Container(
               color: Colors.black,
