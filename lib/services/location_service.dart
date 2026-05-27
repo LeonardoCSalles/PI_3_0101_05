@@ -5,7 +5,7 @@ import '../models/location_model.dart';
 
 class LocationService {
    // MUDA PARA false quando for testar no campus de verdade
-  static const bool modoDesenvolvedor = true;
+  static const bool modoDesenvolvedor = false;
   // Pega a posição atual do jogador uma vez
   static Future<Position?> getCurrentPosition() async {
     bool temPermissao = await PermissionService.requestLocationPermission();

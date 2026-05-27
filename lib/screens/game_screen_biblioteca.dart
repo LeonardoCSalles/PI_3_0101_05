@@ -5,6 +5,7 @@ import '../services/firebase_service.dart';
 import '../models/player_state.dart';
 import '../services/location_service.dart';
 import '../models/location_model.dart';
+import '../services/audio_service.dart';
 
 class GameScreenBiblioteca extends StatefulWidget {
   @override
@@ -49,6 +50,7 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   @override
   void initState() {
     super.initState();
+    AudioService.tocar('biblioteca.mp3');
     _verificarLocalizacao();
   }
 

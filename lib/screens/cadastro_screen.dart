@@ -68,7 +68,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
           // FUNDO
           SizedBox.expand(
             child: Image.asset(
-              'assets/images/bg.jpg',
+              'assets/images/bg.png',
               fit: BoxFit.cover,
             ),
           ),

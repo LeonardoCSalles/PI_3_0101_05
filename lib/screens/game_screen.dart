@@ -7,6 +7,7 @@ import 'package:misterio_no_campus/models/location_model.dart';
 import '../services/firebase_service.dart';
 import '../models/player_state.dart';
 import 'game_screen_biblioteca.dart';
+import '../services/audio_service.dart';
 
 class GameScreen extends StatefulWidget {
   @override
@@ -70,6 +71,7 @@ class _GameScreenState extends State<GameScreen> {
     GameLocation? ambienteAtual = await LocationService.getAmbienteAtual();
 
     if (ambienteAtual?.id == 'portaria') {
+      AudioService.tocar('portaria.mp3');
       _startDialogue(0);
     } else {
       setState(() {

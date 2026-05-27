@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirebaseService {
   // MUDA PARA true quando quiser ativar o Firebase
-  static const bool firebaseAtivo = false;
+  static const bool firebaseAtivo = true;
 
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
 

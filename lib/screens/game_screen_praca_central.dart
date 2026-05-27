@@ -4,6 +4,7 @@ import '../services/firebase_service.dart';
 import '../models/player_state.dart';
 import '../services/location_service.dart';
 import '../models/location_model.dart';
+import '../services/audio_service.dart';
 
 class GameScreenPracaCentral extends StatefulWidget {
   @override
@@ -35,6 +36,7 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
   @override
   void initState() {
     super.initState();
+    AudioService.tocar('fim_de_jogo.mp3');
     _verificarLocalizacao();
   }
 
@@ -50,6 +52,7 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
         _typing = false;
       });
     } else {
+      AudioService.tocar('praca_central.mp3');
       _startDialogue(0);
     }
   }

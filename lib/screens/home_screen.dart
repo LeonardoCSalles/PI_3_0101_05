@@ -4,6 +4,7 @@ import '../services/firebase_service.dart';
 import '../models/player_state.dart';
 import 'game_screen.dart';
 import 'cadastro_screen.dart';
+import '../services/audio_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -14,6 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _carregando = false;
 
   void _iniciarNovo() {
+    AudioService.tocar('titulo.mp3');
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CadastroScreen()),
@@ -23,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _continuar() async {
     if (!PlayerState.temJogador) return;
 
+    AudioService.tocar('titulo.mp3');
     setState(() => _carregando = true);
 
     var progresso = await FirebaseService.carregarProgresso(
@@ -45,67 +48,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         children: [
-          // IMAGEM DE FUNDO
+          // IMAGEM DE FUNDO — sem overlay para mostrar a beleza da imagem
           SizedBox.expand(
             child: Image.asset(
-              'assets/images/bg.jpg',
+              'assets/images/bg.png',
               fit: BoxFit.cover,
             ),
           ),
 
-          // OVERLAY ESCURO
-          Container(color: Colors.black.withOpacity(0.6)),
-
-          // CONTEÚDO
-          Center(
+          // BOTÕES — posicionados na parte de baixo da tela
+          Positioned(
+            bottom: screenHeight * 0.18,
+            left: 0,
+            right: 40,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // TÍTULO
-                Text(
-                  'Mistério no Campus',
-                  style: TextStyle(
-                    fontFamily: 'RPG',
-                    fontSize: 36,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 8),
-
-                // SUBTÍTULO
-                Text(
-                  'Um RPG no Campus da PUC-Campinas',
-                  style: GoogleFonts.pressStart2p(
-                    fontSize: 9,
-                    color: Colors.white38,
-                    letterSpacing: 1,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 60),
-
-                // CARREGANDO
                 if (_carregando)
-                  const CircularProgressIndicator(color: Colors.white38)
+                  const CircularProgressIndicator(color: Colors.white)
                 else ...[
 
-                  // BOTÃO INICIAR (novo jogo)
+                  // BOTÃO INICIAR
                   OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white, width: 2),
+                      backgroundColor: Colors.black.withOpacity(0.4),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 60,
-                        vertical: 20,
+                        vertical: 18,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     onPressed: _iniciarNovo,
@@ -119,19 +96,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
-                  // BOTÃO CONTINUAR (só aparece se tem jogador salvo)
+                  // BOTÃO CONTINUAR
                   if (PlayerState.temJogador)
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.white38, width: 2),
+                        backgroundColor: Colors.black.withOpacity(0.4),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 60,
-                          vertical: 20,
+                          vertical: 18,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       onPressed: _continuar,
