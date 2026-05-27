@@ -13,7 +13,7 @@ class GameLocation {
     required this.description,
     required this.latitude,
     required this.longitude,
-    this.radiusMeters = 30.0,
+    this.radiusMeters = 50.0,
     this.isUnlocked = false,
   });
 }

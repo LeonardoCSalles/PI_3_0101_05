@@ -41,6 +41,17 @@ class _GameScreenCantinaState extends State<GameScreenCantina> {
   }
 
   void _verificarLocalizacao() async {
+    if (LocationService.modoDesenvolvedor) {
+    _startDialogue(0);
+    return;
+  }
+
+  setState(() {
+    _speaker = '...';
+    _fullText = 'Verificando localização...';
+    _displayedText = 'Verificando localização...';
+  });
+  
     GameLocation? ambienteAtual = await LocationService.getAmbienteAtual();
 
     if (ambienteAtual?.id != 'cantina') {
@@ -94,49 +105,43 @@ class _GameScreenCantinaState extends State<GameScreenCantina> {
     }
   }
 
-  void _escolher(int opcao) async {
-    final respostas = [
-      {'speaker': 'NARRADOR', 'text': 'Dentro da mochila você encontra um crachá universitário. O nome no crachá é o mesmo do bilhete que encontrou na biblioteca. A investigação está ficando séria.'},
-      {'speaker': 'FUNCIONÁRIO', 'text': 'Olha... eu vi uma pessoa saindo às pressas daqui ontem à noite. Carregava uma mochila e parecia nervosa. Não sei mais nada, juro.'},
-      {'speaker': 'NARRADOR', 'text': 'Você vira as costas, mas seus olhos ficam presos naquela mochila embaixo da mesa. Algo ali precisa ser investigado.'},
-    ];
+ void _escolher(int opcao) async {
+  final respostas = [
+    {'speaker': 'NARRADOR', 'text': 'Dentro da mochila você encontra um crachá universitário. O nome no crachá é o mesmo do bilhete que encontrou na biblioteca. A investigação está ficando séria.'},
+    {'speaker': 'FUNCIONÁRIO', 'text': 'Olha... eu vi uma pessoa saindo às pressas daqui ontem à noite. Carregava uma mochila e parecia nervosa. Não sei mais nada, juro.'},
+    {'speaker': 'NARRADOR', 'text': 'Você vira as costas, mas seus olhos ficam presos naquela mochila embaixo da mesa. Algo ali precisa ser investigado.'},
+  ];
 
-    setState(() {
-      _showChoices = false;
-      _speaker = respostas[opcao]['speaker']!;
-      _fullText = respostas[opcao]['text']!;
-      _displayedText = '';
-      _typing = true;
-      _showAvancar = false;
-    });
+  setState(() {
+    _showChoices = false;
+    _speaker = respostas[opcao]['speaker']!;
+    _fullText = respostas[opcao]['text']!;
+    _displayedText = '';
+    _typing = true;
+    _showAvancar = false;
+  });
+  _typeText(); // igual à biblioteca — chama _typeText separado
 
-    // digita o texto primeiro
-    for (int i = 0; i < _fullText.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 35));
-      if (!mounted) return;
-      setState(() => _displayedText = _fullText.substring(0, i + 1));
+  if (opcao == 0) {
+    if (PlayerState.jogadorId != null) {
+      await FirebaseService.desbloquearAmbiente(
+        jogadorId: PlayerState.jogadorId!,
+        ambienteId: 'laboratorio',
+      );
+      await FirebaseService.registrarInteracao(
+        jogadorId: PlayerState.jogadorId!,
+        ambiente: 'cantina',
+        escolha: 'examinou_mochila',
+      );
     }
+    await Future.delayed(
+        Duration(milliseconds: 35 * respostas[0]['text']!.length + 500));
     if (!mounted) return;
-    setState(() => _typing = false);
-
-    if (opcao == 0) {
-      // espera o jogador ler por 4 segundos antes de mostrar botão
-      await Future.delayed(const Duration(seconds: 4));
-      if (!mounted) return;
-      if (PlayerState.jogadorId != null) {
-        await FirebaseService.desbloquearAmbiente(
-          jogadorId: PlayerState.jogadorId!,
-          ambienteId: 'laboratorio',
-        );
-        await FirebaseService.registrarInteracao(
-          jogadorId: PlayerState.jogadorId!,
-          ambiente: 'cantina',
-          escolha: 'examinou_mochila',
-        );
-      }
-      setState(() => _showAvancar = true);
-    }
+    setState(() => _showAvancar = true);
   }
+  // opcao 1 e 2 — não faz nada extra, o jogador clica para voltar as opções
+}
+  
 
   @override
   Widget build(BuildContext context) {
@@ -220,7 +225,7 @@ class _GameScreenCantinaState extends State<GameScreenCantina> {
             // DIÁLOGO
             Expanded(
               child: GestureDetector(
-                onTap: _onTapDialogue,
+                onTap: _bloqueado ? null : _onTapDialogue,
                 child: Container(
                   width: double.infinity,
                   color: const Color(0xFF000010),

@@ -19,6 +19,7 @@ class _GameScreenState extends State<GameScreen> {
   bool _showChoices = false;
   bool _typing = false;
   bool _showAvancar = false;
+  bool _bloqueado = false;
   String _displayedText = '';
   String _fullText = '';
   String _speaker = '';
@@ -48,10 +49,18 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _iniciarJogo() async {
+    // modo desenvolvedor — pula verificação
+  if (LocationService.modoDesenvolvedor) {
+    AudioService.tocar('portaria.mp3');
+    _startDialogue(0);
+    return;
+  }
+
     bool temPermissao = await PermissionService.requestLocationPermission();
 
     if (!temPermissao) {
       setState(() {
+        _bloqueado = true;
         _speaker = 'SISTEMA';
         _fullText = 'Para jogar, você precisa permitir o acesso à localização.';
         _displayedText = _fullText;
@@ -75,6 +84,7 @@ class _GameScreenState extends State<GameScreen> {
       _startDialogue(0);
     } else {
       setState(() {
+        _bloqueado = true; 
         _speaker = 'SISTEMA';
         _fullText = 'Dirija-se até a entrada principal do campus para iniciar a investigação.';
         _displayedText = _fullText;
@@ -266,7 +276,7 @@ class _GameScreenState extends State<GameScreen> {
             // CAIXA DE DIÁLOGO
             Expanded(
               child: GestureDetector(
-                onTap: _onTapDialogue,
+                onTap: _bloqueado ? null : _onTapDialogue,
                 child: Container(
                   width: double.infinity,
                   color: const Color(0xFF000010),

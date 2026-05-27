@@ -20,7 +20,7 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   bool _showAvancar = false;
   String _displayedText = '';
   String _fullText = '';
-  String _speaker = '';
+  String _speaker = 'NARRADOR';
 
   final List<Map<String, String>> _dialogues = [
     {'speaker': 'NARRADOR', 'text': 'O silêncio da biblioteca é absoluto. Apenas o som de páginas ao longe...'},
@@ -55,6 +55,19 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
   }
 
   void _verificarLocalizacao() async {
+    
+      // modo desenvolvedor — pula verificação
+  if (LocationService.modoDesenvolvedor) {
+    _startDialogue(0);
+    return;
+  }
+
+     setState(() {
+    _speaker = '...';
+    _fullText = 'Verificando localização...';
+    _displayedText = 'Verificando localização...';
+  });
+
     GameLocation? ambienteAtual = await LocationService.getAmbienteAtual();
 
     if (ambienteAtual?.id != 'biblioteca') {
@@ -259,7 +272,7 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
             // CAIXA DE DIÁLOGO
             Expanded(
               child: GestureDetector(
-                onTap: _onTapDialogue,
+                onTap: _bloqueado ? null : _onTapDialogue,
                 child: Container(
                   width: double.infinity,
                   color: const Color(0xFF000010),

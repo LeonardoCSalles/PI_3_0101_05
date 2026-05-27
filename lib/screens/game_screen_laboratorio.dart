@@ -41,12 +41,23 @@ class _GameScreenLaboratorioState extends State<GameScreenLaboratorio> {
   }
 
   void _verificarLocalizacao() async {
+    if (LocationService.modoDesenvolvedor) {
+    _startDialogue(0);
+    return;
+  }
+
+  setState(() {
+    _speaker = '...';
+    _fullText = 'Verificando localização...';
+    _displayedText = 'Verificando localização...';
+  });
+
     GameLocation? ambienteAtual = await LocationService.getAmbienteAtual();
 
     if (ambienteAtual?.id != 'laboratorio') {
       setState(() {
         _bloqueado = true;
-        _speaker = 'NARRADOR';
+        _speaker = 'SISTEMA';
         _fullText = 'Você precisa estar no Laboratório para continuar a investigação. Dirija-se até lá.';
         _displayedText = _fullText;
         _typing = false;
@@ -95,48 +106,42 @@ class _GameScreenLaboratorioState extends State<GameScreenLaboratorio> {
   }
 
   void _escolher(int opcao) async {
-    final respostas = [
-      {'speaker': 'NARRADOR', 'text': 'Na tela você lê: "Encontro confirmado. Praça Central. 18h00. Venha sozinho." Era isso que estavam escondendo o tempo todo.'},
-      {'speaker': 'ALUNO', 'text': 'Eu cheguei aqui por acaso e vi a tela aberta. Os registros mostram horários e nomes de professores. Alguém dentro do campus está por trás de tudo isso.'},
-      {'speaker': 'NARRADOR', 'text': 'Você se aproxima das câmeras cobertas. A fita preta está bem fixada. Quem fez isso não queria deixar rastros. Mas já deixou pistas suficientes.'},
-    ];
+  final respostas = [
+    {'speaker': 'NARRADOR', 'text': 'Na tela você lê: "Encontro confirmado. Praça Central. 18h00. Venha sozinho." Era isso que estavam escondendo o tempo todo.'},
+    {'speaker': 'ALUNO', 'text': 'Eu cheguei aqui por acaso e vi a tela aberta. Os registros mostram horários e nomes de professores. Alguém dentro do campus está por trás de tudo isso.'},
+    {'speaker': 'NARRADOR', 'text': 'Você se aproxima das câmeras cobertas. A fita preta está bem fixada. Quem fez isso não queria deixar rastros. Mas já deixou pistas suficientes.'},
+  ];
 
-    setState(() {
-      _showChoices = false;
-      _speaker = respostas[opcao]['speaker']!;
-      _fullText = respostas[opcao]['text']!;
-      _displayedText = '';
-      _typing = true;
-      _showAvancar = false;
-    });
+  setState(() {
+    _showChoices = false;
+    _speaker = respostas[opcao]['speaker']!;
+    _fullText = respostas[opcao]['text']!;
+    _displayedText = '';
+    _typing = true;
+    _showAvancar = false;
+  });
+  _typeText(); // igual à biblioteca — chama _typeText separado
 
-    // digita o texto letra por letra
-    for (int i = 0; i < _fullText.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 35));
-      if (!mounted) return;
-      setState(() => _displayedText = _fullText.substring(0, i + 1));
+  if (opcao == 0) {
+    if (PlayerState.jogadorId != null) {
+      await FirebaseService.desbloquearAmbiente(
+        jogadorId: PlayerState.jogadorId!,
+        ambienteId: 'praca_central',
+      );
+      await FirebaseService.registrarInteracao(
+        jogadorId: PlayerState.jogadorId!,
+        ambiente: 'laboratorio',
+        escolha: 'examinou_monitor',
+      );
     }
+    await Future.delayed(
+        Duration(milliseconds: 35 * respostas[0]['text']!.length + 500));
     if (!mounted) return;
-    setState(() => _typing = false);
-
-    if (opcao == 0) {
-      // espera o jogador ler antes de mostrar botão
-      await Future.delayed(const Duration(seconds: 4));
-      if (!mounted) return;
-      if (PlayerState.jogadorId != null) {
-        await FirebaseService.desbloquearAmbiente(
-          jogadorId: PlayerState.jogadorId!,
-          ambienteId: 'praca_central',
-        );
-        await FirebaseService.registrarInteracao(
-          jogadorId: PlayerState.jogadorId!,
-          ambiente: 'laboratorio',
-          escolha: 'examinou_monitor',
-        );
-      }
-      setState(() => _showAvancar = true);
-    }
+    setState(() => _showAvancar = true);
   }
+  // opcao 1 e 2 — não faz nada extra, o jogador clica para voltar as opções
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +216,7 @@ class _GameScreenLaboratorioState extends State<GameScreenLaboratorio> {
             // DIÁLOGO
             Expanded(
               child: GestureDetector(
-                onTap: _onTapDialogue,
+                onTap: _bloqueado ? null : _onTapDialogue,
                 child: Container(
                   width: double.infinity,
                   color: const Color(0xFF000010),

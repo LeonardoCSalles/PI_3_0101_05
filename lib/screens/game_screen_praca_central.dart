@@ -41,6 +41,17 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
   }
 
   void _verificarLocalizacao() async {
+    if (LocationService.modoDesenvolvedor) {
+    _startDialogue(0);
+    return;
+  }
+
+  setState(() {
+    _speaker = '...';
+    _fullText = 'Verificando localização...';
+    _displayedText = 'Verificando localização...';
+  });
+  
     GameLocation? ambienteAtual = await LocationService.getAmbienteAtual();
 
     if (ambienteAtual?.id != 'praca_central') {
@@ -239,7 +250,7 @@ class _GameScreenPracaCentralState extends State<GameScreenPracaCentral> {
             // DIÁLOGO
             Expanded(
               child: GestureDetector(
-                onTap: _onTapDialogue,
+                onTap: _bloqueado ? null : _onTapDialogue,
                 child: Container(
                   width: double.infinity,
                   color: const Color(0xFF000010),
