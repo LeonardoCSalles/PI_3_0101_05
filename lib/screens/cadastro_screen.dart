@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/firebase_service.dart';
 import '../models/player_state.dart';
 import 'game_screen.dart';
+import '../services/storage_service.dart';
 
 class CadastroScreen extends StatefulWidget {
   @override
@@ -46,6 +47,8 @@ class _CadastroScreenState extends State<CadastroScreen> {
       PlayerState.ambientesDesbloqueados = ['portaria'];
       PlayerState.ambienteAtual = 'portaria';
 
+      await StorageService.salvarJogadorId(jogadorId, nome);
+
       setState(() => _carregando = false);
 
       Navigator.pushReplacement(
@@ -55,7 +58,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
     } catch (e) {
       setState(() {
         _carregando = false;
-        _erro = 'Erro ao criar jogador. Tente novamente.';
+        _erro = 'Erro: $e';
       });
     }
   }
