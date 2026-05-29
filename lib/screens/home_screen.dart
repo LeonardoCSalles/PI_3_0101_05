@@ -5,6 +5,10 @@ import '../models/player_state.dart';
 import 'game_screen.dart';
 import 'cadastro_screen.dart';
 import '../services/audio_service.dart';
+import 'game_screen_biblioteca.dart';
+import 'game_screen_cantina.dart';
+import 'game_screen_laboratorio.dart';
+import 'game_screen_praca_central.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -22,30 +26,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _continuar() async {
-    if (!PlayerState.temJogador) return;
+ void _continuar() async {
+  if (!PlayerState.temJogador) return;
 
-    AudioService.tocar('titulo.mp3');
-    setState(() => _carregando = true);
+  AudioService.tocar('titulo.mp3');
+  setState(() => _carregando = true);
 
-    var progresso = await FirebaseService.carregarProgresso(
-      PlayerState.jogadorId!,
-    );
+  var progresso = await FirebaseService.carregarProgresso(
+    PlayerState.jogadorId!,
+  );
 
-    if (progresso != null) {
-      PlayerState.ambientesDesbloqueados =
-          List<String>.from(progresso['ambientesDesbloqueados']);
-      PlayerState.ambienteAtual = progresso['ambienteAtual'];
-    }
-
-    setState(() => _carregando = false);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => GameScreen()),
-    );
+  if (progresso != null) {
+    PlayerState.ambientesDesbloqueados =
+        List<String>.from(progresso['ambientesDesbloqueados']);
+    PlayerState.ambienteAtual = progresso['ambienteAtual'];
   }
 
+  setState(() => _carregando = false);
+
+  // Navega para o ambiente correto baseado no progresso
+  Widget proximaTela;
+  switch (PlayerState.ambienteAtual) {
+    case 'biblioteca':
+      proximaTela = GameScreenBiblioteca();
+      break;
+    case 'cantina':
+      proximaTela = GameScreenCantina();
+      break;
+    case 'laboratorio':
+      proximaTela = GameScreenLaboratorio();
+      break;
+    case 'praca_central':
+      proximaTela = GameScreenPracaCentral();
+      break;
+    default:
+      proximaTela = GameScreen(); // portaria
+  }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => proximaTela),
+  );
+}
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;

@@ -63,7 +63,7 @@ class LocationService {
   if (posicao == null) return null;
 
   for (GameLocation ambiente in gameLocations) {
-    if (ambiente.isUnlocked && estaNoAmbiente(
+    if (estaNoAmbiente(
       posicaoAtual: posicao,
       ambiente: ambiente,
     )) {

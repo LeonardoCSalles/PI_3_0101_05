@@ -168,15 +168,36 @@ class _GameScreenBibliotecaState extends State<GameScreenBiblioteca> {
           children: [
             // coloca isso dentro do Column, antes da barra de localização
             if (_bloqueado)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                color: const Color(0xFF1A0000),
-                child: Text(
-                  '📍 FORA DO RAIO — BIBLIOTECA',
-                  style: GoogleFonts.pressStart2p(fontSize: 8, color: Colors.redAccent),
-                  textAlign: TextAlign.center,
-                ),
+              Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    color: const Color(0xFF1A0000),
+                    child: Text(
+                      '📍 FORA DO RAIO — BIBLIOTECA',
+                      style: GoogleFonts.pressStart2p(fontSize: 8, color: Colors.redAccent),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() => _bloqueado = false);
+                      _verificarLocalizacao();
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      color: const Color(0xFF001A00),
+                      child: Center(
+                        child: Text(
+                          '🔄 VERIFICAR LOCALIZAÇÃO',
+                          style: GoogleFonts.pressStart2p(fontSize: 8, color: Colors.greenAccent),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             // BARRA DE LOCALIZAÇÃO
             Container(
